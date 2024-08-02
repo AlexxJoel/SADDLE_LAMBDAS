@@ -10,11 +10,6 @@ Globals:
   Function:
     Timeout: 10
     MemorySize: 256
-  Api:
-    Cors:
-      AllowMethods: "'GET,POST,PUT,DELETE'"
-      AllowHeaders: "'*'"
-      AllowOrigin: "'*'"
 
 Resources:
   HelloWorldFunction:
@@ -73,18 +68,12 @@ Resources:
                   - cognito-idp:AdminSetUserPassword
                 Resource: arn:aws:cognito-idp:us-west-1:471112501035:userpool/us-west-1_WUespA4kW
 
-
-
   # Auth
   AuthApi:
     Type: AWS::Serverless::Api
     Properties:
       Name: AuthApi
       StageName: Prod
-      Cors:
-        AllowMethods: "'GET,POST,PUT,DELETE'"
-        AllowHeaders: "'*'"
-        AllowOrigin: "'*'"
 
   LoginFunction:
     Type: AWS::Serverless::Function
@@ -103,18 +92,12 @@ Resources:
             Path: /login
             Method: POST
 
-
-
 #  Saddle
   SaddleApi:
     Type: AWS::Serverless::Api
     Properties:
       Name: SaddleApi
       StageName: Prod
-      Cors:
-        AllowMethods: "'GET,POST,PUT,DELETE'"
-        AllowHeaders: "'*'"
-        AllowOrigin: "'*'"
 
   GetAllFunction:
     Type: AWS::Serverless::Function
@@ -180,11 +163,6 @@ Resources:
             RestApiId: !Ref SaddleApi
             Path: /saddle/{id}
             Method: DELETE
-
-
-
-
-
 
 Outputs:
 

@@ -10,11 +10,27 @@ def lambda_handler(event, __):
     # Connect to database
     conn = connect_db()
 
+    # Handle CORS preflight request
+    if event['httpMethod'] == 'OPTIONS':
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+                'Access-Control-Allow-Methods': 'GET,OPTIONS,POST,PUT'
+            },
+            'body': ''
+        }
+
+    headers_response = {
+        'Access-Control-Allow-Origin': '*'
+    }
+
     if conn:
         try:
             # Execute query
             response = execute_query(conn, query)
-            #close connection
+            # Close connection
             close_connection(conn)
 
             if response:
@@ -22,9 +38,10 @@ def lambda_handler(event, __):
                 for item in response:
                     logging.info(item)
 
-                # return success response
+                # Return success response
                 return {
                     'statusCode': 200,
+                    'headers': headers_response,
                     'body': json.dumps({
                         "message": "Catalog items retrieved successfully",
                         "data": {
@@ -39,6 +56,7 @@ def lambda_handler(event, __):
                 logging.info("Empty response")
                 return {
                     'statusCode': 204,
+                    'headers': headers_response,
                     'body': json.dumps({
                         "message": "No records found",
                         "statusCode": 204,
@@ -49,6 +67,7 @@ def lambda_handler(event, __):
             logging.error(f"Error executing query: {e}")
             return {
                 'statusCode': 500,
+                'headers': headers_response,
                 'body': json.dumps({
                     "message": "An error occurred while retrieving catalog items",
                     "statusCode": 500,
@@ -59,6 +78,7 @@ def lambda_handler(event, __):
         logging.error("Error connecting to database")
         return {
             'statusCode': 500,
+            'headers': headers_response,
             'body': json.dumps({
                 "message": "An error occurred while connecting to the database",
                 "statusCode": 500,
@@ -67,4 +87,10 @@ def lambda_handler(event, __):
         }
 
 
+# Uncomment the following line for local testing
 # print(lambda_handler(None, None))
+if __name__ == "__main__":
+    event = {
+        'httpMethod': 'GET',
+    }
+    print(lambda_handler(event, None))

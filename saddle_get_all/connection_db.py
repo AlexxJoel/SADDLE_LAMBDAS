@@ -33,16 +33,21 @@ def execute_query(conn, query):
             cur.execute(query)
             logging.info("Query executed successfully")
 
-            conn.commit()
+            data = cur.fetchall()
+            rows = []
 
-            return cur.fetchall()
+            # array of objects
+            for row in data:
+                # get column names
+                columns = [col.name for col in cur.description]
+                # create dictionary of column names and values
+                row_data = dict(zip(columns, row))
+                rows.append(row_data)
 
+            return rows
     except Exception as e:
         logging.error("Error executing query: %s", e)
-        conn.rollback()
         raise e
-    finally:
-        conn.autocommit = True
 
 
 def close_connection(conn):
