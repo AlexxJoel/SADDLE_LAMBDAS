@@ -44,11 +44,11 @@ def lambda_handler(event, __):
 
                 # return success response
                 return {
-                    'statusCode': 200,
+                    'statusCode': 201,
                     'body': json.dumps({
                         "message": "saddle saved successfully",
                         "data": response,
-                        "statusCode": 200,
+                        "statusCode": 201,
                         "error": False,
                     })
                 }
