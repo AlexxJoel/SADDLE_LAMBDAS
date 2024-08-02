@@ -10,18 +10,6 @@ def lambda_handler(event, __):
     # Connect to database
     conn = connect_db()
 
-    # Handle CORS preflight request
-    if event['httpMethod'] == 'OPTIONS':
-        return {
-            'statusCode': 200,
-            'headers': {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-                'Access-Control-Allow-Methods': 'GET,OPTIONS,POST,PUT'
-            },
-            'body': ''
-        }
-
     headers_response = {
         'Access-Control-Allow-Origin': '*'
     }
