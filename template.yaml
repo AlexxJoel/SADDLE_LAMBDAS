@@ -1,0 +1,246 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  saddle
+
+  Sample SAM Template for saddle
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 10
+    MemorySize: 256
+  Api:
+    Cors:
+      AllowMethods: "'GET,POST,PUT,DELETE'"
+      AllowHeaders: "'*'"
+      AllowOrigin: "'*'"
+
+Resources:
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: hello_world/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Architectures:
+        - x86_64
+      Events:
+        HelloWorld:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /hello
+            Method: get
+
+#  Roles lambda
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                  Service:
+                  - lambda.amazonaws.com
+              Action:
+                  - sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaBasicExecution
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+        - PolicyName: manage-cognito-users-pool-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cognito-idp:AdminCreateUser
+                  - cognito-idp:AdminAddUserToGroup
+                  - cognito-idp:RespondToAuthChallenge
+                  - cognito-idp:AdminInitiateAuth
+                  - cognito-idp:InitiateAuth
+                  - cognito-idp:AdminListGroupsForUser
+                  - cognito-idp:AdminUpdateUserAttributes
+                  - cognito-idp:AdminDeleteUser
+                  - cognito-idp:AdminSetUserPassword
+                Resource: arn:aws:cognito-idp:us-west-1:471112501035:userpool/us-west-1_WUespA4kW
+
+
+
+  # Auth
+  AuthApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: AuthApi
+      StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+
+  LoginFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: login/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Architectures:
+        - x86_64
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Events:
+        Login:
+          Type: Api
+          Properties:
+            RestApiId: !Ref AuthApi
+            Path: /login
+            Method: POST
+
+
+
+#  Saddle
+  SaddleApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: SaddleApi
+      StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+
+  GetAllFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: saddle_get_all/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Architectures:
+        - x86_64
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Events:
+        GetAll:
+          Type: Api
+          Properties:
+            RestApiId: !Ref SaddleApi
+            Path: /saddle
+            Method: GET
+  CreateFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: saddle_create/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Architectures:
+        - x86_64
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Events:
+        GetAll:
+          Type: Api
+          Properties:
+            RestApiId: !Ref SaddleApi
+            Path: /saddle
+            Method: POST
+  UpdateFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: saddle_update/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Architectures:
+        - x86_64
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Events:
+        GetAll:
+          Type: Api
+          Properties:
+            RestApiId: !Ref SaddleApi
+            Path: /saddle
+            Method: PUT
+  DeleteFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: saddle_delete/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Architectures:
+        - x86_64
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Events:
+        GetAll:
+          Type: Api
+          Properties:
+            RestApiId: !Ref SaddleApi
+            Path: /saddle/{id}
+            Method: DELETE
+
+
+
+
+
+
+Outputs:
+
+  # Give permission for the API Gateway to invoke the Lambda function
+  HelloWorldFunctionIamRole:
+    Description: "Implicit IAM Role created for Hello World function"
+    Value: !GetAtt HelloWorldFunctionRole.Arn
+
+
+  LambdaExecutionRole:
+    Description: "Lambda Execution Role"
+    Value: !GetAtt LambdaExecutionRole.Arn
+
+
+  LoginFunctionArn:
+    Description: "Login Lambda Function ARN"
+    Value: !GetAtt LoginFunction.Arn
+  GetAllFunctionArn:
+    Description: "Get data Class By get all  Lambda Function ARN"
+    Value: !GetAtt GetAllFunction.Arn
+  CreateFunctionArn:
+    Description: "Create data Class By create  Lambda Function ARN"
+    Value: !GetAtt CreateFunction.Arn
+  UpdateFunctionArn:
+    Description: "Update data Class By update  Lambda Function ARN"
+    Value: !GetAtt UpdateFunction.Arn
+  DeleteFunctionArn:
+    Description: "Delete data Class By delete  Lambda Function ARN"
+    Value: !GetAtt DeleteFunction.Arn
+
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  HelloWorldApi:
+    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
+  HelloWorldFunction:
+    Description: "Hello World Lambda Function ARN"
+    Value: !GetAtt HelloWorldFunction.Arn
+#  Output for Auth
+  AuthApiUrl:
+    Description: "API Gateway endpoint URL with path login for Prod stage to Class Model"
+    Value: !Sub "https://${AuthApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/login/"
+# Output for Saddle Get All
+  GetAllFunctionApiUrl:
+    Description: "API Gateway endpoint URL with path get all saddle_get_all for Prod stage to Class Model"
+    Value: !Sub "https://${SaddleApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/saddle"
+# Output for Saddle Create
+  CreateFunctionApiUrl:
+      Description: "API Gateway endpoint URL with path create saddle_create for Prod stage to Class Model"
+      Value: !Sub "https://${SaddleApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/saddle"
+# Output for Saddle Update
+  UpdateFunctionApiUrl:
+      Description: "API Gateway endpoint URL with path update saddle_update for Prod stage to Class Model"
+      Value: !Sub "https://${SaddleApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/saddle"
+# Output for Saddle Delete
+  DeleteFunctionApiUrl:
+      Description: "API Gateway endpoint URL with path delete saddle_delete for Prod stage to Class Model"
+      Value: !Sub "https://${SaddleApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/saddle/{id}"
